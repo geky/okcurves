@@ -1,0 +1,43 @@
+<body>
+<style>
+    :root {
+        --background: #000000;
+        --foreground: #ffffff;
+    }
+    body {
+        background-color: var(--background);
+        color: var(--foreground);
+    }
+    hr {
+        color: var(--foreground);
+    }
+</style>
+<hr>
+<form class="update">
+    <label for="background">background:</label>
+    <input type="color" id="background" name="background" value="#000000"> 
+    <label for="foreground">foreground:</label>
+    <input type="color" id="foreground" name="foreground" value="#ffffff"> 
+</form>
+<hr>
+<script>
+    function update() {
+        console.log('hi!');
+        let state = {};
+        state.background = document.getElementById('background').value;
+        state.foreground = document.getElementById('foreground').value;
+
+        let root = document.documentElement;
+        root.style.setProperty('--background', state.background);
+        root.style.setProperty('--foreground', state.foreground);
+
+        console.log('update', state);
+    }
+    
+    (function() {
+        for (let x of document.getElementsByClassName('update')) {
+            x.addEventListener('change', update);
+        }
+    })();
+</script>
+</body>
