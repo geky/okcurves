@@ -1,8 +1,9 @@
 <body>
 <style>
+    /* ground stuff */
     :root {
-        --background: #000000;
-        --foreground: #ffffff;
+        --background: #222222;
+        --foreground: #fdf6e3;
     }
     body {
         background-color: var(--background);
@@ -11,32 +12,154 @@
     hr {
         color: var(--foreground);
     }
+    /* form stuff */
+    p, form {
+        margin: 4px 0 4px 0;
+    }
+    input[type="color"] {
+        border: 0;
+        /*border: 4px #ff0000;*/
+        padding: 0;
+        /*color: #ff0000;*/
+        /*background-color: #00ff00;*/
+        width: 44px;
+        height: 23px;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch,
+    input[type="color"]::-moz-color-swatch {
+        border-color: var(--foreground);
+    }
+    input[type="number"] {
+        width: 44px;
+        height: 23px;
+        padding: 0 1px 0 2px;
+        border: 0;
+        background: var(--foreground);
+        color: var(--background);
+        vertical-align: top;
+    }
+    /* palette stuff */
+    .palette {
+        display: flex;
+    }
+    .palette > div {
+        width: 72px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: small monospace;
+    }
 </style>
 <hr>
-<form class="update">
+<form class="u_ground">
     <label for="background">background:</label>
-    <input type="color" id="background" name="background" value="#000000"> 
+    <input type="color" id="background" name="background" value="#222222"> 
     <label for="foreground">foreground:</label>
-    <input type="color" id="foreground" name="foreground" value="#ffffff"> 
+    <input type="color" id="foreground" name="foreground" value="#fdf6e3"> 
 </form>
 <hr>
+<form class="u_rgb_l">
+    <p>rgb linear gradient</p>
+    <label for="u_rgb_l_a">a:</label>
+    <input type="color" id="u_rgb_l_a" name="u_rgb_l_a" value="#222222"> 
+    <label for="u_rbg_l_b">b:</label>
+    <input type="color" id="u_rgb_l_b" name="u_rgb_l_b" value="#fdf6e3"> 
+    <label for="u_rgb_l_n">n:</label>
+    <input type="number" id="u_rgb_l_n" name="u_rgb_l_n" value="12">
+</form>
+<div id="u_rgb_l_palette" class="palette"></div>
+<hr>
 <script>
-    function update() {
+    // some rgb converters
+    function hex_torgb(hex) {
+        let x = parseInt(hex.slice(1, hex.length), 16);
+        return [
+                ((x >> 16) & 0xff) / 0xff,
+                ((x >>  8) & 0xff) / 0xff,
+                ((x >>  0) & 0xff) / 0xff];
+    }
+
+    function hex_fromrgb(rgb) {
+        let [r, g, b] = rgb;
+        let r_ = Math.min(Math.max(Math.round(r * 0xff), 0), 0xff);
+        let g_ = Math.min(Math.max(Math.round(g * 0xff), 0), 0xff);
+        let b_ = Math.min(Math.max(Math.round(b * 0xff), 0), 0xff);
+        let x = (r_ << 16) | (g_ << 8) | (b_ << 0);
+        return ('#' + x.toString(16).padStart(6, '0'));
+    }
+
+    // linear interpolation
+    function lerp(a, b, t) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = a[i]*(1-t) + b[i]*t;
+        }
+        return x;
+    }
+
+    // update functions
+    function u_ground() {
         console.log('hi!');
+
+        // calculate state
         let state = {};
         state.background = document.getElementById('background').value;
         state.foreground = document.getElementById('foreground').value;
 
+        // update state
         let root = document.documentElement;
         root.style.setProperty('--background', state.background);
         root.style.setProperty('--foreground', state.foreground);
 
-        console.log('update', state);
+        console.log('u_ground', state);
+    }
+
+    function u_rgb_l(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_rgb_l_a').value;
+        state.b = document.getElementById('u_rgb_l_b').value;
+        state.n = parseInt(document.getElementById('u_rgb_l_n').value);
+
+        // create rbg linear gradient
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_fromrgb(
+                lerp(   hex_torgb(state.a),
+                        hex_torgb(state.b),
+                        i/(state.n-1)));
+        }
+
+        // update state
+        let palette = document.getElementById('u_rgb_l_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('div');
+            p.appendChild(document.createTextNode(state.palette[i]));
+            p.style.backgroundColor = state.palette[i];
+            if (hex_torgb(state.palette[i]).reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_rgb_l', state);
     }
     
     (function() {
-        for (let x of document.getElementsByClassName('update')) {
-            x.addEventListener('change', update);
+        for (let u of [u_ground, u_rgb_l]) {
+            for (let x of document.getElementsByClassName(u.name)) {
+                x.addEventListener('change', u);
+            }
+            u();
         }
     })();
 </script>

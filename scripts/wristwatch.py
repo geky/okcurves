@@ -300,44 +300,44 @@ def wristserve(addr, **args):
                     **args)
 
         def do_GET(self):
-            # upgrade websocket?
-            if self.headers.get('Upgrade') == 'websocket':
-                self.ws_handshake()
+            try:
+                # upgrade websocket?
+                if self.headers.get('Upgrade') == 'websocket':
+                    self.ws_handshake()
 
-            # livereload injection get?
-            elif args.get('inject_livereload'):
-                # convert to bytes
-                payload = bytes(JS_LIVERELOAD.strip(), 'utf8')
+                # livereload injection get?
+                elif args.get('inject_livereload'):
+                    # convert to bytes
+                    payload = bytes(JS_LIVERELOAD.strip(), 'utf8')
 
-                # intercept Content-Length
-                is_html = False
-                def send_header(self, key, value):
-                    nonlocal is_html
-                    if (key.lower() == 'content-type'
-                            and value.split(';', 1)[0] == 'text/html'):
-                        is_html = True
-                    elif (key.lower() == 'content-length'
-                            and is_html
-                            and value != '0'):
-                        value = str(int(value) + len(payload))
-                    super().send_header(key, value)
-                self.send_header = send_header.__get__(self)
-                try:
+                    # intercept Content-Length
+                    is_html = False
+                    def send_header(self, key, value):
+                        nonlocal is_html
+                        if (key.lower() == 'content-type'
+                                and value.split(';', 1)[0] == 'text/html'):
+                            is_html = True
+                        elif (key.lower() == 'content-length'
+                                and is_html
+                                and value != '0'):
+                            value = str(int(value) + len(payload))
+                        super().send_header(key, value)
+                    self.send_header = send_header.__get__(self)
+                    try:
+                        super().do_GET()
+                    finally:
+                        del self.send_header
+
+                    # inject payload
+                    if is_html:
+                        self.wfile.write(payload)
+
+                # normal get
+                else:
                     super().do_GET()
-                finally:
-                    del self.send_header
-
-                # inject payload
-                if is_html:
-                    self.wfile.write(payload)
-
-            # normal get
-            else:
-                try:
-                    super().do_GET()
-                # ignore disconnected clients
-                except BrokenPipeError:
-                    pass
+            # ignore disconnected clients
+            except BrokenPipeError:
+                pass
 
         def handle(self):
             try:
