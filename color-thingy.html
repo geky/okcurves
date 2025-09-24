@@ -57,25 +57,50 @@
 <hr>
 <form class="u_ground">
     <label for="background">background:</label>
-    <input type="color" id="background" name="background" value="#222222"> 
+    <input type="color" id="background" name="background" value="#222222">
     <label for="foreground">foreground:</label>
-    <input type="color" id="foreground" name="foreground" value="#fdf6e3"> 
+    <input type="color" id="foreground" name="foreground" value="#fdf6e3">
 </form>
 <hr>
 <form class="u_rgb_l">
     <p>rgb linear gradient</p>
     <label for="u_rgb_l_a">a:</label>
-    <input type="color" id="u_rgb_l_a" name="u_rgb_l_a" value="#222222"> 
+    <input type="color" id="u_rgb_l_a" name="u_rgb_l_a" value="#222222">
     <label for="u_rbg_l_b">b:</label>
-    <input type="color" id="u_rgb_l_b" name="u_rgb_l_b" value="#fdf6e3"> 
+    <input type="color" id="u_rgb_l_b" name="u_rgb_l_b" value="#fdf6e3">
     <label for="u_rgb_l_n">n:</label>
     <input type="number" id="u_rgb_l_n" name="u_rgb_l_n" value="12">
 </form>
 <div id="u_rgb_l_palette" class="palette"></div>
 <hr>
+<form class="u_oklch_l">
+    <p>oklch linear gradient</p>
+    <label for="u_oklch_l_a">a:</label>
+    <input type="color" id="u_oklch_l_a" name="u_oklch_l_a" value="#222222">
+    <label for="u_rbg_l_b">b:</label>
+    <input type="color" id="u_oklch_l_b" name="u_oklch_l_b" value="#fdf6e3">
+    <label for="u_oklch_l_n">n:</label>
+    <input type="number" id="u_oklch_l_n" name="u_oklch_l_n" value="12">
+</form>
+<div id="u_oklch_l_palette" class="palette"></div>
+<hr>
+<form class="u_okhsv_l">
+    <p>okhsv linear gradient</p>
+    <label for="u_okhsv_l_a">a:</label>
+    <input type="color" id="u_okhsv_l_a" name="u_okhsv_l_a" value="#222222">
+    <label for="u_rbg_l_b">b:</label>
+    <input type="color" id="u_okhsv_l_b" name="u_okhsv_l_b" value="#fdf6e3">
+    <label for="u_okhsv_l_n">n:</label>
+    <input type="number" id="u_okhsv_l_n" name="u_okhsv_l_n" value="12">
+</form>
+<div id="u_okhsv_l_palette" class="palette"></div>
+<hr>
 <script>
-    // some rgb converters
-    function hex_torgb(hex) {
+    // oklch/okhsv is all based on work by Björn Ottosson:
+    // - https://bottosson.github.io/posts/oklab
+
+    // hex <-> rgb conversion
+    function rgb_fromhex(hex) {
         let x = parseInt(hex.slice(1, hex.length), 16);
         return [
                 ((x >> 16) & 0xff) / 0xff,
@@ -92,6 +117,410 @@
         return ('#' + x.toString(16).padStart(6, '0'));
     }
 
+    // rgb <-> lrgb conversion
+    function lrgb_fromrgb(rgb) {
+        function f_inv(x) {
+            return ((x >= 0.04045)
+                    ? Math.pow((x + 0.055)/(1 + 0.055), 2.4)
+                    : x/12.92);
+        }
+
+        let [r, g, b] = rgb;
+        return [f_inv(r), f_inv(g), f_inv(b)];
+    }
+
+    function rgb_fromlrgb(lrgb) {
+        function f(x) {
+            return ((x >= 0.0031308)
+                    ? 1.055*Math.pow(x, 1.0/2.4) - 0.055
+                    : 12.92*x);
+        }
+
+        let [r, g, b] = lrgb;
+        return [f(r), f(g), f(b)];
+    }
+
+    // lrgb <-> oklab conversion
+    function oklab_fromlrgb(lrgb) {
+        let [r, g, b] = lrgb;
+        let l = 0.4122214708*r + 0.5363325363*g + 0.0514459929*b;
+        let m = 0.2119034982*r + 0.6806995451*g + 0.1073969566*b;
+        let s = 0.0883024619*r + 0.2817188376*g + 0.6299787005*b;
+        l = Math.pow(l, 1/3);
+        m = Math.pow(m, 1/3);
+        s = Math.pow(s, 1/3);
+        let l_ = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
+        let a_ = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
+        let b_ = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+        return [l_, a_, b_];
+    }
+
+    function lrgb_fromoklab(oklab) {
+        let [l, a, b] = oklab;
+        let l_ = l + 0.3963377774*a + 0.2158037573*b;
+        let m_ = l - 0.1055613458*a - 0.0638541728*b;
+        let s_ = l - 0.0894841775*a - 1.2914855480*b;
+        l_ = Math.pow(l_, 3);
+        m_ = Math.pow(m_, 3);
+        s_ = Math.pow(s_, 3);
+        let r_ = +4.0767416621*l_ - 3.3077115913*m_ + 0.2309699292*s_;
+        let g_ = -1.2684380046*l_ + 2.6097574011*m_ - 0.3413193965*s_;
+        let b_ = -0.0041960863*l_ - 0.7034186147*m_ + 1.7076147010*s_;
+        return [r_, g_, b_];
+    }
+
+    // oklab <-> oklch conversion
+    function oklch_fromoklab(oklab) {
+        let [l, a, b] = oklab;
+        // cartesian -> polar
+        let c = Math.hypot(a, b);
+        let h = 0.5 + Math.atan2(-b, -a)/(2*Math.PI);
+        return [l, c, h];
+    }
+
+    function oklab_fromoklch(oklch) {
+        let [l, c, h] = oklch;
+        // polar -> cartesian
+        let a = c * Math.cos(2*Math.PI * h);
+        let b = c * Math.sin(2*Math.PI * h);
+        return [l, a, b];
+    }
+
+    function oklch_maxsat(a_n, b_n) {
+        // a, b should be normalized to a^2 + b^2 == 1 here
+        console.assert(
+                Math.abs(Math.pow(a_n, 2) + Math.pow(b_n, 2) - 1)
+                    < 0.00001);
+
+        // max saturation is where one of rbg <= 0
+
+        // r <= 0?
+        let k_0, k_1, k_2, k_3, k_4, w_l, w_m, w_s;
+        if (-1.88170328*a_n - 0.80936493*b_n > 1) {
+            k_0 = +1.19086277;
+            k_1 = +1.76576728;
+            k_2 = +0.59662641;
+            k_3 = +0.75515197;
+            k_4 = +0.56771245;
+            w_l = +4.0767416621;
+            w_m = -3.3077115913;
+            w_s = +0.2309699292;
+        // g <= 0?
+        } else if (1.81444104*a_n - 1.19445276*b_n > 1) {
+            k_0 = +0.73956515;
+            k_1 = -0.45954404;
+            k_2 = +0.08285427;
+            k_3 = +0.12541070;
+            k_4 = +0.14503204;
+            w_l = -1.2684380046;
+            w_m = +2.6097574011;
+            w_s = -0.3413193965;
+        // b <= 0?
+        } else {
+            k_0 = +1.35733652;
+            k_1 = -0.00915799;
+            k_2 = -1.15130210;
+            k_3 = -0.50559606;
+            k_4 = +0.00692167;
+            w_l = -0.0041960863;
+            w_m = -0.7034186147;
+            w_s = +1.7076147010;
+        }
+
+        // approximate max saturation
+        let s = k_0 + k_1*a_n + k_2*b_n + k_3*(a_n**2) + k_4*a_n*b_n;
+
+        // do one step of Halley's method to get closer
+        let k_l = +0.3963377774*a_n + 0.2158037573*b_n;
+        let k_m = -0.1055613458*a_n - 0.0638541728*b_n;
+        let k_s = -0.0894841775*a_n - 1.2914855480*b_n;
+        for (let i = 0; i < 1; i++) {
+            let l_ = 1 + s*k_l;
+            let m_ = 1 + s*k_m;
+            let s_ = 1 + s*k_s;
+
+            let l_ds0 = Math.pow(l_, 3);
+            let m_ds0 = Math.pow(m_, 3);
+            let s_ds0 = Math.pow(s_, 3);
+
+            let l_ds1 = 3*k_l*Math.pow(l_, 2);
+            let m_ds1 = 3*k_m*Math.pow(m_, 2);
+            let s_ds1 = 3*k_s*Math.pow(s_, 2);
+
+            let l_ds2 = 6*Math.pow(k_l, 2)*l_;
+            let m_ds2 = 6*Math.pow(k_m, 2)*m_;
+            let s_ds2 = 6*Math.pow(k_s, 2)*s_;
+
+            let f_0 = w_l*l_ds0 + w_m*m_ds0 + w_s*s_ds0;
+            let f_1 = w_l*l_ds1 + w_m*m_ds1 + w_s*s_ds1;
+            let f_2 = w_l*l_ds2 + w_m*m_ds2 + w_s*s_ds2;
+
+            s -= f_0*f_1 / (f_1**2 - 0.5*f_0*f_2);
+        }
+
+        return s
+    }
+
+    function oklch_cusp(a_n, b_n) {
+        // a, b should be normalized to a^2 + b^2 == 1 here
+        console.assert(
+                Math.abs(Math.pow(a_n, 2) + Math.pow(b_n, 2) - 1)
+                    < 0.00001);
+
+        // first find max saturation
+        let s_max = oklch_maxsat(a_n, b_n);
+
+        // triangle intersection in srgb space to find where one of rgb >= 1
+        let rgb_max = lrgb_fromoklab([1, s_max*a_n, s_max*b_n]);
+        let l_max = Math.pow(1/Math.max(...rgb_max), 1/3);
+        let c_max = l_max * s_max;
+        return [l_max, c_max];
+    }
+
+    function oklch_intersect(a_n, b_n, l, c, l_0) {
+        // a, b should be normalized to a^2 + b^2 == 1 here
+        console.assert(
+                Math.abs(Math.pow(a_n, 2) + Math.pow(b_n, 2) - 1)
+                    < 0.00001);
+
+        // find the cusp
+        let [l_max, c_max] = oklch_cusp(a_n, b_n);
+
+        // intersect lower half
+        if ((l-l_0)*c_max - (l_max-l_0)*c <= 0) {
+            return (c_max*l_0) / (c*l_max + c_max*(l_0-l));
+
+        // intersect upper half
+        } else {
+            // first intersect with triangle
+            let t = (c_max*(l_0-1)) / (c*(l_max-1) + c_max*(l_0-l));
+
+            // then do one step of Halley's method to get closer
+            let dl = l - l_0;
+            let dc = c;
+
+            let k_l = +0.3963377774*a_n + 0.2158037573*b_n;
+            let k_m = -0.1055613458*a_n - 0.0638541728*b_n;
+            let k_s = -0.0894841775*a_n - 1.2914855480*b_n;
+
+            let l_dt = dl + dc*k_l;
+            let m_dt = dl + dc*k_m;
+            let s_dt = dl + dc*k_s;
+
+            for (let i = 0; i < 1; i++) {
+                let l_ = t*l + (1-t)*l_0;
+                let c_ = t*c;
+
+                let l__ = l_ + c_*k_l;
+                let m__ = l_ + c_*k_m;
+                let s__ = l_ + c_*k_s;
+
+                let l_dt0 = Math.pow(l__, 3);
+                let m_dt0 = Math.pow(m__, 3);
+                let s_dt0 = Math.pow(s__, 3);
+
+                let l_dt1 = 3*l_dt*Math.pow(l__, 2);
+                let m_dt1 = 3*m_dt*Math.pow(m__, 2);
+                let s_dt1 = 3*s_dt*Math.pow(s__, 2);
+
+                let l_dt2 = 6*Math.pow(l_dt, 2)*l__;
+                let m_dt2 = 6*Math.pow(m_dt, 2)*m__;
+                let s_dt2 = 6*Math.pow(s_dt, 2)*s__;
+
+    let r0 = 4.0767416621*l_dt0 - 3.3077115913*m_dt0 + 0.2309699292*s_dt0 - 1;
+    let r1 = 4.0767416621*l_dt1 - 3.3077115913*m_dt1 + 0.2309699292*s_dt1;
+    let r2 = 4.0767416621*l_dt2 - 3.3077115913*m_dt2 + 0.2309699292*s_dt2;
+
+                let u_r = r1 / (Math.pow(r1, 2) - 0.5*r0*r2);
+                let t_r = -r0 * u_r;
+
+    let g0 = -1.2684380046*l_dt0 + 2.6097574011*m_dt0 - 0.3413193965*s_dt0 - 1;
+    let g1 = -1.2684380046*l_dt1 + 2.6097574011*m_dt1 - 0.3413193965*s_dt1;
+    let g2 = -1.2684380046*l_dt2 + 2.6097574011*m_dt2 - 0.3413193965*s_dt2;
+
+                let u_g = g1 / (Math.pow(g1, 2) - 0.5*g0*g2);
+                let t_g = -g0 * u_g;
+
+    let b0 = -0.0041960863*l_dt0 - 0.7034186147*m_dt0 + 1.7076147010*s_dt0 - 1;
+    let b1 = -0.0041960863*l_dt1 - 0.7034186147*m_dt1 + 1.7076147010*s_dt1;
+    let b2 = -0.0041960863*l_dt2 - 0.7034186147*m_dt2 + 1.7076147010*s_dt2;
+
+                let u_b = b1 / (Math.pow(b1, 2) - 0.5*b0*b2);
+                let t_b = -b0 * u_b;
+
+                t_r = (u_r >= 0) ? t_r : 10000.0;
+                t_g = (u_g >= 0) ? t_g : 10000.0;
+                t_b = (u_b >= 0) ? t_b : 10000.0;
+
+                t += Math.min(t_r, t_g, t_b);
+            }
+
+            return t;
+        }
+    }
+
+    // clip in oklch space such that rgb is representable
+    //
+    // Björn Ottosson has a number of adaptive clipping algorithms, this
+    // one is the simplest. We just clamping lightness and then clipping
+    // chroma
+    //
+    function oklch_clip(oklch) {
+        // do we even need to clip?
+        if (oklch.every((x) => x >= 0 && x <= 1)) {
+            return oklch;
+        }
+        let [l, c, h] = oklch;
+
+        // hue -> normalized a_, b_
+        let a_n = Math.cos(2*Math.PI * h);
+        let b_n = Math.sin(2*Math.PI * h);
+
+        let l_0 = Math.min(Math.max(l, 0), 1);
+
+        let t = oklch_intersect(a_n, b_n, l, c, l_0);
+        let l_clip = t*l + (1-t)*l_0;
+        let c_clip = t*c;
+        return [l_clip, c_clip, h];
+    }
+
+    function oklch_fromrgb(rgb) {
+        return oklch_fromoklab(oklab_fromlrgb(lrgb_fromrgb(rgb)));
+    }
+
+    function rgb_fromoklch(oklch) {
+        return rgb_fromlrgb(lrgb_fromoklab(oklab_fromoklch(oklch)));
+    }
+
+    function rgb_clipoklch(oklch) {
+        return rgb_fromoklch(oklch_clip(oklch));
+    }
+
+    function oklch_fromhex(hex) {
+        return oklch_fromrgb(rgb_fromhex(hex));
+    }
+
+    function hex_fromoklch(oklch) {
+        return hex_fromrgb(rgb_fromoklch(oklch));
+    }
+
+    function hex_clipoklch(oklch) {
+        return hex_fromrgb(rgb_clipoklch(oklch));
+    }
+
+    // oklch <-> okhsv conversion
+    function oklch_toe(x) {
+        let k_1 = 0.206;
+        let k_2 = 0.03;
+        let k_3 = (1 + k_1) / (1 + k_2);
+        return ((k_3*x - k_1
+                    + Math.pow(
+                        Math.pow(k_3*x - k_1, 2) + 4*k_2*k_3*x,
+                        1/2))
+                / 2);
+    }
+
+    function oklch_toe_inv(x) {
+        let k_1 = 0.206;
+        let k_2 = 0.03;
+        let k_3 = (1 + k_1) / (1 + k_2);
+        return (Math.pow(x, 2) + k_1*x) / (k_3*(x + k_2));
+    }
+
+    function okhsv_fromoklch(oklch) {
+        let [l, c, h] = oklch;
+
+        // normalize a, b
+        let [_, a, b] = oklab_fromoklch(oklch);
+        let a_n = a / c;
+        let b_n = b / c;
+
+        // find max s, t
+        let s_0 = 0.5
+        let [l_max, c_max] = oklch_cusp(a_n, b_n);
+        let s_max = c_max / l_max;
+        let t_max = c_max / (1-l_max);
+        let k = 1 - s_0/s_max;
+
+        // find l_v, c_v, l_vt, c_vt
+        let t = t_max / (c + l*t_max);
+        let l_v = t * l;
+        let c_v = t * c;
+
+        let l_vt = oklch_toe_inv(l_v);
+        let c_vt = c_v*l_vt / l_v;
+
+        // invert toe and cusp
+        let rgb_scale = lrgb_fromoklab([l_vt, a_n*c_vt, b_n*c_vt]);
+        let l_scale = Math.pow(1/Math.max(...rgb_scale, 0), 1/3);
+
+        let l_ = l / l_scale;
+        let c_ = c / l_scale;
+
+        let l__ = oklch_toe(l_);
+        let c__ = c_*oklch_toe(l_) / l_;
+
+        // convert l, c -> s, v
+        let s = (s_0 + t_max)*c_v / ((t_max*s_0) + (t_max*k*c_v));
+        let v = l__ / l_v;
+        return [h, s, v];
+    }
+
+    function oklch_fromokhsv(okhsv) {
+        let [h, s, v] = okhsv;
+
+        // hue -> normalized a_, b_
+        let a_n = Math.cos(2*Math.PI * h);
+        let b_n = Math.sin(2*Math.PI * h);
+
+        // find max s, t
+        let s_0 = 0.5;
+        let [l_max, c_max] = oklch_cusp(a_n, b_n);
+        let s_max = c_max / l_max;
+        let t_max = c_max / (1-l_max);
+        let k = 1 - s_0/s_max;
+
+        // convert s, v -> l, c assuming perfect triangle
+        let l_v = 1  -  s*s_0 / (s_0 + t_max - t_max*k*s);
+        let c_v = s*t_max*s_0 / (s_0 + t_max - t_max*k*s);
+
+        let l = v * l_v;
+        let c = v * c_v;
+
+        // adjust toe and cusp
+        let l_vt = oklch_toe_inv(l_v);
+        let c_vt = c_v*l_vt / l_v;
+
+        let l_ = oklch_toe_inv(l);
+        let c_ = c*l_ / l;
+
+        let rgb_scale = lrgb_fromoklab([l_vt, a_n*c_vt, b_n*c_vt]);
+        let l_scale = Math.pow(1/Math.max(...rgb_scale, 0), 1/3);
+
+        let l__ = l_ * l_scale;
+        let c__ = c_ * l_scale;
+        return [l__, c__, h];
+    }
+
+    function okhsv_fromrgb(rgb) {
+        return okhsv_fromoklch(oklch_fromrgb(rgb));
+    }
+
+    function rgb_fromokhsv(okhsv) {
+        return rgb_fromoklch(oklch_fromokhsv(okhsv));
+    }
+
+    function okhsv_fromhex(hex) {
+        return okhsv_fromoklch(oklch_fromhex(hex));
+    }
+
+    function hex_fromokhsv(okhsv) {
+        return hex_fromoklch(oklch_fromokhsv(okhsv));
+    }
+
+
+    // vector math stuff
+
     // linear interpolation
     function lerp(a, b, t) {
         let x = [];
@@ -100,6 +529,7 @@
         }
         return x;
     }
+
 
     // update functions
     function u_ground() {
@@ -131,8 +561,8 @@
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_fromrgb(
-                lerp(   hex_torgb(state.a),
-                        hex_torgb(state.b),
+                lerp(   rgb_fromhex(state.a),
+                        rgb_fromhex(state.b),
                         i/(state.n-1)));
         }
 
@@ -143,7 +573,8 @@
             let p = document.createElement('div');
             p.appendChild(document.createTextNode(state.palette[i]));
             p.style.backgroundColor = state.palette[i];
-            if (hex_torgb(state.palette[i]).reduce((a,b) => a + b, 0) < 1.5) {
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
                 p.style.color = 'var(--foreground)';
             } else {
                 p.style.color = 'var(--background)';
@@ -153,9 +584,83 @@
 
         console.log('u_rgb_l', state);
     }
-    
+
+    function u_oklch_l(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_l_a').value;
+        state.b = document.getElementById('u_oklch_l_b').value;
+        state.n = parseInt(document.getElementById('u_oklch_l_n').value);
+
+        // create rbg linear gradient
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch(
+                lerp(   oklch_fromhex(state.a),
+                        oklch_fromhex(state.b),
+                        i/(state.n-1)));
+        }
+
+        // update state
+        let palette = document.getElementById('u_oklch_l_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('div');
+            p.appendChild(document.createTextNode(state.palette[i]));
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_l', state);
+    }
+
+    function u_okhsv_l(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_okhsv_l_a').value;
+        state.b = document.getElementById('u_okhsv_l_b').value;
+        state.n = parseInt(document.getElementById('u_okhsv_l_n').value);
+
+        // create rbg linear gradient
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_fromokhsv(
+                lerp(   okhsv_fromhex(state.a),
+                        okhsv_fromhex(state.b),
+                        i/(state.n-1)));
+        }
+
+        // update state
+        let palette = document.getElementById('u_okhsv_l_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('div');
+            p.appendChild(document.createTextNode(state.palette[i]));
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_okhsv_l', state);
+    }
+
     (function() {
-        for (let u of [u_ground, u_rgb_l]) {
+        for (let u of [u_ground, u_rgb_l, u_oklch_l, u_okhsv_l]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
             }
