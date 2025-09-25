@@ -32,22 +32,67 @@
     input[type="color"]::-moz-color-swatch {
         border-color: var(--foreground);
     }
+    input.color {
+        width: 54px;
+        height: 23px;
+        padding: 0 6px 0 6px;
+        border: 1px solid var(--foreground);
+        background: var(--foreground);
+        color: var(--background);
+        font: small monospace;
+        vertical-align: bottom;
+        /*vertical-align: top;*/
+    }
     input[type="number"] {
         width: 44px;
         height: 23px;
-        padding: 0 1px 0 2px;
-        border: 0;
-        background: var(--foreground);
-        color: var(--background);
-        vertical-align: top;
+        padding: 0 1.5px 0 4px;
+        border: 1px solid var(--foreground);
+        background: var(--background);
+        color: var(--foreground);
+        /*font: small monospace;*/
+        vertical-align: bottom;
+    }
+    input.number {
+        width: 36px;
+        height: 23px;
+        padding: 0 4px 0 4px;
+        border: 1px solid var(--foreground);
+        background: var(--background);
+        color: var(--foreground);
+        /*font: small monospace;*/
+        vertical-align: bottom;
+    }
+    .number_spinner {
+        display: inline-flex;
+        flex-direction: column;
+        vertical-align: bottom;
+    }
+    .number_spinner > .up {
+        margin: 0 0 -0.5px -12px;
+    }
+    .number_spinner > .down {
+        margin: -0.5px 0 0 -12px;
+        /*transform: rotate(180deg);*/
+        transform: scale(+1, -1);
+    }
+    .number_spinner > button {
+        width: 12px;
+        height: 12px;
+        padding: 0;
+        border: 1px solid var(--foreground);
+        font: small monospace;
+        background: var(--background);
+        color: var(--foreground);
     }
     /* palette stuff */
     .palette {
         display: flex;
     }
-    .palette > div {
-        width: 72px;
+    .palette > span {
+        width: 60px;
         height: 44px;
+        padding: 0 6px 0 6px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -57,41 +102,41 @@
 <hr>
 <form class="u_ground">
     <label for="background">background:</label>
-    <input type="color" id="background" name="background" value="#222222">
+    <input type="text" class="color" id="background" value="#222222">
     <label for="foreground">foreground:</label>
-    <input type="color" id="foreground" name="foreground" value="#fdf6e3">
+    <input type="text" class="color" id="foreground" value="#fdf6e3">
 </form>
 <hr>
 <form class="u_rgb_l">
     <p>rgb linear gradient</p>
     <label for="u_rgb_l_a">a:</label>
-    <input type="color" id="u_rgb_l_a" name="u_rgb_l_a" value="#222222">
+    <input type="text" class="color" id="u_rgb_l_a" value="#222222">
     <label for="u_rbg_l_b">b:</label>
-    <input type="color" id="u_rgb_l_b" name="u_rgb_l_b" value="#fdf6e3">
+    <input type="text" class="color" id="u_rgb_l_b" value="#fdf6e3">
     <label for="u_rgb_l_n">n:</label>
-    <input type="number" id="u_rgb_l_n" name="u_rgb_l_n" value="12">
+    <input type="text" class="number" id="u_rgb_l_n" value="12">
 </form>
 <div id="u_rgb_l_palette" class="palette"></div>
 <hr>
 <form class="u_oklch_l">
     <p>oklch linear gradient</p>
     <label for="u_oklch_l_a">a:</label>
-    <input type="color" id="u_oklch_l_a" name="u_oklch_l_a" value="#222222">
+    <input type="text" class="color" id="u_oklch_l_a" value="#222222">
     <label for="u_rbg_l_b">b:</label>
-    <input type="color" id="u_oklch_l_b" name="u_oklch_l_b" value="#fdf6e3">
+    <input type="text" class="color" id="u_oklch_l_b" value="#fdf6e3">
     <label for="u_oklch_l_n">n:</label>
-    <input type="number" id="u_oklch_l_n" name="u_oklch_l_n" value="12">
+    <input type="text" class="number" id="u_oklch_l_n" value="12">
 </form>
 <div id="u_oklch_l_palette" class="palette"></div>
 <hr>
 <form class="u_okhsv_l">
     <p>okhsv linear gradient</p>
     <label for="u_okhsv_l_a">a:</label>
-    <input type="color" id="u_okhsv_l_a" name="u_okhsv_l_a" value="#222222">
+    <input type="text" class="color" id="u_okhsv_l_a" value="#222222">
     <label for="u_rbg_l_b">b:</label>
-    <input type="color" id="u_okhsv_l_b" name="u_okhsv_l_b" value="#fdf6e3">
+    <input type="text" class="color" id="u_okhsv_l_b" value="#fdf6e3">
     <label for="u_okhsv_l_n">n:</label>
-    <input type="number" id="u_okhsv_l_n" name="u_okhsv_l_n" value="12">
+    <input type="text" class="number" id="u_okhsv_l_n" value="12">
 </form>
 <div id="u_okhsv_l_palette" class="palette"></div>
 <hr>
@@ -518,6 +563,16 @@
         return hex_fromoklch(oklch_fromokhsv(okhsv));
     }
 
+    // other color miscellany
+    function mkreadable(hex, fg, bg) {
+        let [r, g, b] = rgb_fromhex(hex);
+        if (r + g + b < 1.5) {
+            return fg;
+        } else {
+            return bg;
+        }
+    }
+
 
     // vector math stuff
 
@@ -570,8 +625,9 @@
         let palette = document.getElementById('u_rgb_l_palette');
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
-            let p = document.createElement('div');
-            p.appendChild(document.createTextNode(state.palette[i]));
+            let p = document.createElement('span');
+            //p.appendChild(document.createTextNode(state.palette[i]));
+            p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
             if (rgb_fromhex(state.palette[i])
                     .reduce((a,b) => a + b, 0) < 1.5) {
@@ -607,8 +663,9 @@
         let palette = document.getElementById('u_oklch_l_palette');
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
-            let p = document.createElement('div');
-            p.appendChild(document.createTextNode(state.palette[i]));
+            let p = document.createElement('span');
+            //p.appendChild(document.createTextNode(state.palette[i]));
+            p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
             if (rgb_fromhex(state.palette[i])
                     .reduce((a,b) => a + b, 0) < 1.5) {
@@ -644,15 +701,13 @@
         let palette = document.getElementById('u_okhsv_l_palette');
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
-            let p = document.createElement('div');
-            p.appendChild(document.createTextNode(state.palette[i]));
+            let p = document.createElement('span');
+            //p.appendChild(document.createTextNode(state.palette[i]));
+            p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i],
+                    'var(--foreground)',
+                    'var(--background)');
             palette.appendChild(p);
         }
 
@@ -660,6 +715,53 @@
     }
 
     (function() {
+        // prevent form submissions
+        for (let x of document.getElementsByTagName('form')) {
+            x.addEventListener('submit', (e) => e.preventDefault());
+        }
+
+        // custom color input function
+        for (let x of document.querySelectorAll('input.color')) {
+            function u(e) {
+                let x = e.target;
+                let v = x.value;
+                x.style.backgroundColor = v;
+                x.style.color = mkreadable(v,
+                    'var(--foreground)',
+                    'var(--background)');
+            }
+            x.addEventListener('change', u);
+            x.addEventListener('focus', (e) => e.target.select());
+            u({target: x});
+        }
+
+        // custom number spinner
+        for (let x of document.querySelectorAll('input.number')) {
+            let spinner = document.createElement('span');
+            spinner.setAttribute('class', 'number_spinner');
+            let up = document.createElement('button');
+            up.setAttribute('type', 'button');
+            up.setAttribute('class', 'up');
+            up.innerHTML = '^';
+            up.addEventListener('click', function() {
+                console.log('YO!', x)
+                x.value = parseInt(x.value) + 1;
+                x.dispatchEvent(new Event('change', {'bubbles': true}));
+            });
+            spinner.appendChild(up);
+            let down = document.createElement('button');
+            down.setAttribute('type', 'button');
+            down.setAttribute('class', 'down');
+            down.innerHTML = '^';
+            down.addEventListener('click', function() {
+                x.value = parseInt(x.value) - 1;
+                x.dispatchEvent(new Event('change', {'bubbles': true}));
+            });
+            spinner.appendChild(down);
+            x.parentElement.insertBefore(spinner, x.nextSibling);
+        }
+
+        // palette update functions
         for (let u of [u_ground, u_rgb_l, u_oklch_l, u_okhsv_l]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
