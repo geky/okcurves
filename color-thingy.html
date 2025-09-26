@@ -43,6 +43,25 @@
         vertical-align: bottom;
         /*vertical-align: top;*/
     }
+    input.color_auto {
+        padding: 0 10px 0 2px;
+    }
+    .color_auto_trans {
+        display: inline-flex;
+        flex-direction: column;
+        vertical-align: bottom;
+        width: 12px;
+        margin: 0 0 0 -12px;
+    }
+    .color_auto_trans > button {
+        width: 12px;
+        height: 23px;
+        padding: 0;
+        border: 1px solid var(--foreground);
+        font: small monospace;
+        background: var(--background);
+        color: var(--foreground);
+    }
     input[type="number"] {
         width: 44px;
         height: 23px;
@@ -67,17 +86,10 @@
         display: inline-flex;
         flex-direction: column;
         vertical-align: bottom;
-    }
-    .number_spinner > .up {
-        margin: 0 0 -0.5px -12px;
-    }
-    .number_spinner > .down {
-        margin: -0.5px 0 0 -12px;
-        /*transform: rotate(180deg);*/
-        transform: scale(+1, -1);
+        width: 12px;
+        margin: 0 0 0 -12px;
     }
     .number_spinner > button {
-        width: 12px;
         height: 12px;
         padding: 0;
         border: 1px solid var(--foreground);
@@ -85,14 +97,22 @@
         background: var(--background);
         color: var(--foreground);
     }
+    .number_spinner_up {
+        margin: 0 0 -0.5px 0;
+    }
+    .number_spinner_down {
+        margin: -0.5px 0 0 0;
+        /*transform: rotate(180deg);*/
+        transform: scale(+1, -1);
+    }
     /* palette stuff */
     .palette {
         display: flex;
     }
     .palette > span {
-        width: 60px;
+        width: 68px;
         height: 44px;
-        padding: 0 6px 0 6px;
+        padding: 0 2px 0 2px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -124,6 +144,9 @@
     <input type="text" class="color" id="u_oklch_l_a" value="#222222">
     <label for="u_oklch_l_b">b:</label>
     <input type="text" class="color" id="u_oklch_l_b" value="#fdf6e3">
+    <label for="u_oklch_l_h">h:</label>
+    <input type="text" class="color color_auto" id="u_oklch_l_h"
+        value="#fdf6e3" data-auto-target="u_oklch_l_b">
     <label for="u_oklch_l_n">n:</label>
     <input type="text" class="number" id="u_oklch_l_n" value="9">
 </form>
@@ -241,16 +264,41 @@
     }
 
     // oklab <-> oklch conversion
+    let oklch_hueorigin = undefined;
+
     function oklch_fromoklab(oklab) {
         let [l, a, b] = oklab;
         // cartesian -> polar
         let c = Math.hypot(a, b);
         let h = 0.5 + Math.atan2(-b, -a)/(2*Math.PI);
+        if (oklch_hueorigin != undefined) {
+            // if chroma is small (grays), default to hue origin
+            if (c < 0.00001) {
+                h = 0.5;
+            // center hue origin
+            } else {
+                h = h - (oklch_hueorigin - 0.5);
+                if (h < 0) {
+                    h += 1;
+                } else if (h >= 1) {
+                    h -= 1;
+                }
+            }
+        }
         return [l, c, h];
     }
 
     function oklab_fromoklch(oklch) {
         let [l, c, h] = oklch;
+        if (oklch_hueorigin != undefined) {
+            // uncenter hue origin
+            h = h + (oklch_hueorigin - 0.5);
+            if (h < 0) {
+                h += 1;
+            } else if (h >= 1) {
+                h -= 1;
+            }
+        }
         // polar -> cartesian
         let a = c * Math.cos(2*Math.PI * h);
         let b = c * Math.sin(2*Math.PI * h);
@@ -791,9 +839,12 @@
         let state = {};
         state.a = document.getElementById('u_oklch_l_a').value;
         state.b = document.getElementById('u_oklch_l_b').value;
+        state.h = document.getElementById('u_oklch_l_h').value;
         state.n = parseInt(document.getElementById('u_oklch_l_n').value);
 
         // create oklch linear gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_clipoklch(
@@ -802,6 +853,7 @@
                         oklch_fromhex(state.b),
                         i/(state.n-1)));
         }
+        oklch_hueorigin = undefined;
 
         // update state
         let palette = document.getElementById('u_oklch_l_palette');
@@ -963,23 +1015,58 @@
             u({target: x});
         }
 
+        // custom color transmission
+        for (let x of document.querySelectorAll('input.color_auto')) {
+            let trans = document.createElement('span');
+            trans.setAttribute('class', 'color_auto_trans');
+            let auto = document.createElement('button');
+            auto.setAttribute('type', 'button');
+            auto.setAttribute('class', 'color_auto_trans_auto');
+            x.dataset.auto = 'A';
+            auto.innerHTML = x.dataset.auto;
+            auto.addEventListener('click', function() {
+                x.dataset.auto = (x.dataset.auto == 'A') ? 'M' : 'A';
+                auto.innerHTML = x.dataset.auto;
+                x.dispatchEvent(new Event('change', {'bubbles': true}));
+            });
+            trans.appendChild(auto);
+            x.parentElement.insertBefore(trans, x.nextSibling);
+
+            let target = document.getElementById(x.dataset.autoTarget);
+            if (target) {
+                function u() {
+                    if (x.dataset.auto == 'A') {
+                        let v = target.value;
+                        x.value = v;
+                        x.style.backgroundColor = v;
+                        x.style.color = mkreadable(v,
+                            'var(--foreground)',
+                            'var(--background)');
+                        x.dispatchEvent(new Event('change', {'bubbles': true}));
+                    }
+                }
+                target.addEventListener('change', u);
+                auto.addEventListener('click', u);
+                u();
+            }
+        }
+
         // custom number spinner
         for (let x of document.querySelectorAll('input.number')) {
             let spinner = document.createElement('span');
             spinner.setAttribute('class', 'number_spinner');
             let up = document.createElement('button');
             up.setAttribute('type', 'button');
-            up.setAttribute('class', 'up');
+            up.setAttribute('class', 'number_spinner_up');
             up.innerHTML = '^';
             up.addEventListener('click', function() {
-                console.log('YO!', x)
                 x.value = parseInt(x.value) + 1;
                 x.dispatchEvent(new Event('change', {'bubbles': true}));
             });
             spinner.appendChild(up);
             let down = document.createElement('button');
             down.setAttribute('type', 'button');
-            down.setAttribute('class', 'down');
+            down.setAttribute('class', 'number_spinner_down');
             down.innerHTML = '^';
             down.addEventListener('click', function() {
                 x.value = parseInt(x.value) - 1;
