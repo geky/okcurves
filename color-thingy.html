@@ -111,10 +111,10 @@
     <p>rgb linear gradient</p>
     <label for="u_rgb_l_a">a:</label>
     <input type="text" class="color" id="u_rgb_l_a" value="#222222">
-    <label for="u_rbg_l_b">b:</label>
+    <label for="u_rgb_l_b">b:</label>
     <input type="text" class="color" id="u_rgb_l_b" value="#fdf6e3">
     <label for="u_rgb_l_n">n:</label>
-    <input type="text" class="number" id="u_rgb_l_n" value="12">
+    <input type="text" class="number" id="u_rgb_l_n" value="9">
 </form>
 <div id="u_rgb_l_palette" class="palette"></div>
 <hr>
@@ -122,10 +122,10 @@
     <p>oklch linear gradient</p>
     <label for="u_oklch_l_a">a:</label>
     <input type="text" class="color" id="u_oklch_l_a" value="#222222">
-    <label for="u_rbg_l_b">b:</label>
+    <label for="u_oklch_l_b">b:</label>
     <input type="text" class="color" id="u_oklch_l_b" value="#fdf6e3">
     <label for="u_oklch_l_n">n:</label>
-    <input type="text" class="number" id="u_oklch_l_n" value="12">
+    <input type="text" class="number" id="u_oklch_l_n" value="9">
 </form>
 <div id="u_oklch_l_palette" class="palette"></div>
 <hr>
@@ -133,12 +133,38 @@
     <p>okhsv linear gradient</p>
     <label for="u_okhsv_l_a">a:</label>
     <input type="text" class="color" id="u_okhsv_l_a" value="#222222">
-    <label for="u_rbg_l_b">b:</label>
+    <label for="u_okhsv_l_b">b:</label>
     <input type="text" class="color" id="u_okhsv_l_b" value="#fdf6e3">
     <label for="u_okhsv_l_n">n:</label>
-    <input type="text" class="number" id="u_okhsv_l_n" value="12">
+    <input type="text" class="number" id="u_okhsv_l_n" value="9">
 </form>
 <div id="u_okhsv_l_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_l3">
+    <p>oklch linear gradient</p>
+    <label for="u_oklch_l3_a">a:</label>
+    <input type="text" class="color" id="u_oklch_l3_a" value="#222222">
+    <label for="u_oklch_l3_b">b:</label>
+    <input type="text" class="color" id="u_oklch_l3_b" value="#b32d2d">
+    <label for="u_oklch_l3_c">c:</label>
+    <input type="text" class="color" id="u_oklch_l3_c" value="#fdf6e3">
+    <label for="u_oklch_l3_n">n:</label>
+    <input type="text" class="number" id="u_oklch_l3_n" value="9">
+</form>
+<div id="u_oklch_l3_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_a3">
+    <p>oklch arc gradient</p>
+    <label for="u_oklch_a3_a">a:</label>
+    <input type="text" class="color" id="u_oklch_a3_a" value="#222222">
+    <label for="u_oklch_a3_b">b:</label>
+    <input type="text" class="color" id="u_oklch_a3_b" value="#b32d2d">
+    <label for="u_oklch_a3_c">c:</label>
+    <input type="text" class="color" id="u_oklch_a3_c" value="#fdf6e3">
+    <label for="u_oklch_a3_n">n:</label>
+    <input type="text" class="number" id="u_oklch_a3_n" value="9">
+</form>
+<div id="u_oklch_a3_palette" class="palette"></div>
 <hr>
 <script>
     // oklch/okhsv is all based on work by Björn Ottosson:
@@ -577,12 +603,129 @@
     // vector math stuff
 
     // linear interpolation
-    function lerp(a, b, t) {
+    function v_lerp(a, b, t) {
         let x = [];
         for (let i = 0; i < a.length; i++) {
             x[i] = a[i]*(1-t) + b[i]*t;
         }
         return x;
+    }
+
+    // three-point arc interpolation
+    function v_add(a, b) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = a[i] + b[i];
+        }
+        return x;
+    }
+
+    function v_sub(a, b) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = a[i] - b[i];
+        }
+        return x;
+    }
+
+    function v_len(a) {
+        return Math.hypot(...a);
+    }
+
+    function v_dist(a, b) {
+        return v_len(v_sub(a, b));
+    }
+
+    function v_scale(s, a) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = s*a[i];
+        }
+        return x;
+    }
+
+    function v_dot(a, b) {
+        let s = 0;
+        for (let i = 0; i < a.length; i++) {
+            s += a[i]*b[i];
+        }
+        return s;
+    }
+
+    function v_cross(a, b) {
+        return [a[1]*b[2] - a[2]*b[1],
+                a[2]*b[0] - a[0]*b[2],
+                a[0]*b[1] - a[1]*b[0]];
+    }
+
+    function v_circumcircle(a, b, c) {
+        // Wikipedia has a great derivation of this:
+        // https://en.wikipedia.org/wiki/Circumcircle#Higher_dimensions
+        let d = v_sub(a, c);
+        let e = v_sub(b, c);
+        // find circumcenter
+        let p = v_add(
+                v_scale(
+                    1 / (2*v_len(v_cross(d, e))*v_len(v_cross(d, e))),
+                    v_cross(
+                        v_sub(
+                            v_scale(v_len(d)*v_len(d), e),
+                            v_scale(v_len(e)*v_len(e), d)),
+                        v_cross(d, e))),
+                c);
+        // find circumradius
+        let r = ((v_len(d)*v_len(e)*v_dist(d, e))
+                / (2*v_len(v_cross(d, e))));
+        return [p, r];
+    }
+
+    function v_angle(p, a, b) {
+        let d = v_sub(a, p);
+        let e = v_sub(b, p);
+        // find normal
+        let n = v_cross(d, e);
+        n = v_scale(1/v_len(n), n);
+        // find angle
+        let r = Math.acos(v_dot(d, e) / (v_len(d)*v_len(e)));
+        return [n, r];
+    }
+
+    function v_rotate(p, n, r, a) {
+        // translate
+        a = v_sub(a, p);
+        // normalize
+        n = v_scale(1/v_len(n), n);
+        // precalculate cos/sin
+        let cos_r = Math.cos(r);
+        let sin_r = Math.sin(r);
+        // Rotation from Wikipedia:
+        // https://en.wikipedia.org/wiki/Rotation_matrix
+        // #Rotation_matrix_from_axis_and_angle
+        let x = ((n[0]*n[0]*(1-cos_r) + cos_r)*a[0]
+                + (n[0]*n[1]*(1-cos_r) - n[2]*sin_r)*a[1]
+                + (n[0]*n[2]*(1-cos_r) + n[1]*sin_r)*a[2]);
+        let y = ((n[0]*n[1]*(1-cos_r) + n[2]*sin_r)*a[0]
+                + (n[1]*n[1]*(1-cos_r) + cos_r)*a[1]
+                + (n[1]*n[2]*(1-cos_r) - n[0]*sin_r)*a[2]);
+        let z = ((n[0]*n[2]*(1-cos_r) - n[1]*sin_r)*a[0]
+                + (n[1]*n[2]*(1-cos_r) + n[0]*sin_r)*a[1]
+                + (n[2]*n[2]*(1-cos_r) + cos_r)*a[2]);
+        // untranslate
+        return v_add([x, y, z], p);
+    }
+
+    function v_aerp(a, b, c, t) {
+        // find center and radius of arc
+        let [p, r] = v_circumcircle(a, b, c);
+
+        // scale a->b/b->c independently
+        if (t <= 0.5) {
+            let [n, r] = v_angle(p, a, b);
+            return v_rotate(p, n, r*2*(t-0.0), a);
+        } else {
+            let [n, r] = v_angle(p, b, c);
+            return v_rotate(p, n, r*2*(t-0.5), b);
+        }
     }
 
 
@@ -616,7 +759,8 @@
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_fromrgb(
-                lerp(   rgb_fromhex(state.a),
+                    v_lerp(
+                        rgb_fromhex(state.a),
                         rgb_fromhex(state.b),
                         i/(state.n-1)));
         }
@@ -626,7 +770,6 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
             let p = document.createElement('span');
-            //p.appendChild(document.createTextNode(state.palette[i]));
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
             if (rgb_fromhex(state.palette[i])
@@ -650,11 +793,12 @@
         state.b = document.getElementById('u_oklch_l_b').value;
         state.n = parseInt(document.getElementById('u_oklch_l_n').value);
 
-        // create rbg linear gradient
+        // create oklch linear gradient
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_clipoklch(
-                lerp(   oklch_fromhex(state.a),
+                    v_lerp(
+                        oklch_fromhex(state.a),
                         oklch_fromhex(state.b),
                         i/(state.n-1)));
         }
@@ -664,7 +808,6 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
             let p = document.createElement('span');
-            //p.appendChild(document.createTextNode(state.palette[i]));
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
             if (rgb_fromhex(state.palette[i])
@@ -688,11 +831,12 @@
         state.b = document.getElementById('u_okhsv_l_b').value;
         state.n = parseInt(document.getElementById('u_okhsv_l_n').value);
 
-        // create rbg linear gradient
+        // create okhsv linear gradient
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_fromokhsv(
-                lerp(   okhsv_fromhex(state.a),
+                    v_lerp(
+                        okhsv_fromhex(state.a),
                         okhsv_fromhex(state.b),
                         i/(state.n-1)));
         }
@@ -702,7 +846,6 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.n; i++) {
             let p = document.createElement('span');
-            //p.appendChild(document.createTextNode(state.palette[i]));
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
             p.style.color = mkreadable(state.palette[i],
@@ -712,6 +855,91 @@
         }
 
         console.log('u_okhsv_l', state);
+    }
+
+    function u_oklch_l3(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_l3_a').value;
+        state.b = document.getElementById('u_oklch_l3_b').value;
+        state.c = document.getElementById('u_oklch_l3_c').value;
+        state.n = parseInt(document.getElementById('u_oklch_l3_n').value);
+
+        // create oklch arc gradient
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            let i_ = i / (state.n-1);
+            state.palette[i] = hex_clipoklch(
+                    (i_ <= 0.5)
+                        ? v_lerp(
+                            oklch_fromhex(state.a),
+                            oklch_fromhex(state.b),
+                            2*(i_-0))
+                        : v_lerp(
+                            oklch_fromhex(state.b),
+                            oklch_fromhex(state.c),
+                            2*(i_-0.5)));
+        }
+
+        // update state
+        let palette = document.getElementById('u_oklch_l3_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_l3', state);
+    }
+
+    function u_oklch_a3(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_a3_a').value;
+        state.b = document.getElementById('u_oklch_a3_b').value;
+        state.c = document.getElementById('u_oklch_a3_c').value;
+        state.n = parseInt(document.getElementById('u_oklch_a3_n').value);
+
+        // create oklch arc gradient
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch(
+                    v_aerp(
+                        oklch_fromhex(state.a),
+                        oklch_fromhex(state.b),
+                        oklch_fromhex(state.c),
+                        i/(state.n-1)));
+        }
+
+        // update state
+        let palette = document.getElementById('u_oklch_a3_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_a3', state);
     }
 
     (function() {
@@ -762,7 +990,14 @@
         }
 
         // palette update functions
-        for (let u of [u_ground, u_rgb_l, u_oklch_l, u_okhsv_l]) {
+        for (let u of [
+                u_ground,
+                u_rgb_l,
+                u_oklch_l,
+                u_okhsv_l,
+                u_oklch_l3,
+                u_oklch_a3,
+                ]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
             }
