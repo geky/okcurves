@@ -145,8 +145,10 @@
     <label for="u_oklch_l_b">b:</label>
     <input type="text" class="color" id="u_oklch_l_b" value="#fdf6e3">
     <label for="u_oklch_l_h">h:</label>
+    <input type="checkbox" id="u_oklch_l_h_auto" checked="true" hidden="true">
     <input type="text" class="color color_auto" id="u_oklch_l_h"
-        value="#fdf6e3" data-auto-target="u_oklch_l_b">
+        data-auto-target="u_oklch_l_b"
+        data-auto-state="u_oklch_l_h_auto">
     <label for="u_oklch_l_n">n:</label>
     <input type="text" class="number" id="u_oklch_l_n" value="9">
 </form>
@@ -1017,38 +1019,40 @@
 
         // custom color transmission
         for (let x of document.querySelectorAll('input.color_auto')) {
-            let trans = document.createElement('span');
-            trans.setAttribute('class', 'color_auto_trans');
-            let auto = document.createElement('button');
-            auto.setAttribute('type', 'button');
-            auto.setAttribute('class', 'color_auto_trans_auto');
-            x.dataset.auto = 'A';
-            auto.innerHTML = x.dataset.auto;
-            auto.addEventListener('click', function() {
-                x.dataset.auto = (x.dataset.auto == 'A') ? 'M' : 'A';
-                auto.innerHTML = x.dataset.auto;
-                x.dispatchEvent(new Event('change', {'bubbles': true}));
-            });
-            trans.appendChild(auto);
-            x.parentElement.insertBefore(trans, x.nextSibling);
-
             let target = document.getElementById(x.dataset.autoTarget);
-            if (target) {
-                function u() {
-                    if (x.dataset.auto == 'A') {
-                        let v = target.value;
+            let state = document.getElementById(x.dataset.autoState);
+            function u() {
+                if (state.checked) {
+                    let v = target.value;
+                    if (v != x.value) {
                         x.value = v;
                         x.style.backgroundColor = v;
                         x.style.color = mkreadable(v,
                             'var(--foreground)',
                             'var(--background)');
-                        x.dispatchEvent(new Event('change', {'bubbles': true}));
+                        x.dispatchEvent(
+                            new Event('change', {'bubbles': true}));
                     }
                 }
-                target.addEventListener('change', u);
-                auto.addEventListener('click', u);
-                u();
             }
+
+            let trans = document.createElement('span');
+            trans.setAttribute('class', 'color_auto_trans');
+            let auto = document.createElement('button');
+            auto.setAttribute('type', 'button');
+            auto.setAttribute('class', 'color_auto_trans_auto');
+            auto.innerHTML = (state.checked) ? 'A' : 'M';
+            auto.addEventListener('click', function() {
+                state.checked = !state.checked;
+                auto.innerHTML = (state.checked) ? 'A' : 'M';
+            });
+            trans.appendChild(auto);
+            x.parentElement.insertBefore(trans, x.nextSibling);
+
+            target.addEventListener('change', u);
+            x.addEventListener('change', u);
+            auto.addEventListener('click', u);
+            u();
         }
 
         // custom number spinner
