@@ -160,6 +160,11 @@
     <input id="u_okhsv_l_a" type="text" class="color" value="#222222">
     <label for="u_okhsv_l_b">b:</label>
     <input id="u_okhsv_l_b" type="text" class="color" value="#fdf6e3">
+    <label for="u_okhsv_l_h">h:</label>
+    <input id="u_okhsv_l_h" type="text" class="color color_auto"
+        data-auto-target="u_okhsv_l_b"
+        data-auto-state="u_okhsv_l_h_auto">
+    <input id="u_okhsv_l_h_auto" type="checkbox" checked="true" hidden="true">
     <label for="u_okhsv_l_n">n:</label>
     <input id="u_okhsv_l_n" type="text" class="number" value="9">
 </form>
@@ -173,6 +178,11 @@
     <input id="u_oklch_l3_b" type="text" class="color" value="#b32d2d">
     <label for="u_oklch_l3_c">c:</label>
     <input id="u_oklch_l3_c" type="text" class="color" value="#fdf6e3">
+    <label for="u_oklch_l3_h">h:</label>
+    <input id="u_oklch_l3_h" type="text" class="color color_auto"
+        data-auto-target="u_oklch_l3_b"
+        data-auto-state="u_oklch_l3_h_auto">
+    <input id="u_oklch_l3_h_auto" type="checkbox" checked="true" hidden="true">
     <label for="u_oklch_l3_n">n:</label>
     <input id="u_oklch_l3_n" type="text" class="number" value="9">
 </form>
@@ -186,6 +196,11 @@
     <input id="u_oklch_a3_b" type="text" class="color" value="#b32d2d">
     <label for="u_oklch_a3_c">c:</label>
     <input id="u_oklch_a3_c" type="text" class="color" value="#fdf6e3">
+    <label for="u_oklch_a3_h">h:</label>
+    <input id="u_oklch_a3_h" type="text" class="color color_auto"
+        data-auto-target="u_oklch_a3_b"
+        data-auto-state="u_oklch_a3_h_auto">
+    <input id="u_oklch_a3_h_auto" type="checkbox" checked="true" hidden="true">
     <label for="u_oklch_a3_n">n:</label>
     <input id="u_oklch_a3_n" type="text" class="number" value="9">
 </form>
@@ -883,9 +898,12 @@
         let state = {};
         state.a = document.getElementById('u_okhsv_l_a').value;
         state.b = document.getElementById('u_okhsv_l_b').value;
+        state.h = document.getElementById('u_okhsv_l_h').value;
         state.n = parseInt(document.getElementById('u_okhsv_l_n').value);
 
         // create okhsv linear gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_fromokhsv(
@@ -894,6 +912,7 @@
                         okhsv_fromhex(state.b),
                         i/(state.n-1)));
         }
+        oklch_hueorigin = undefined;
 
         // update state
         let palette = document.getElementById('u_okhsv_l_palette');
@@ -919,9 +938,12 @@
         state.a = document.getElementById('u_oklch_l3_a').value;
         state.b = document.getElementById('u_oklch_l3_b').value;
         state.c = document.getElementById('u_oklch_l3_c').value;
+        state.h = document.getElementById('u_oklch_l3_h').value;
         state.n = parseInt(document.getElementById('u_oklch_l3_n').value);
 
         // create oklch arc gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             let i_ = i / (state.n-1);
@@ -936,6 +958,7 @@
                             oklch_fromhex(state.c),
                             2*(i_-0.5)));
         }
+        oklch_hueorigin = undefined;
 
         // update state
         let palette = document.getElementById('u_oklch_l3_palette');
@@ -964,9 +987,12 @@
         state.a = document.getElementById('u_oklch_a3_a').value;
         state.b = document.getElementById('u_oklch_a3_b').value;
         state.c = document.getElementById('u_oklch_a3_c').value;
+        state.h = document.getElementById('u_oklch_a3_h').value;
         state.n = parseInt(document.getElementById('u_oklch_a3_n').value);
 
         // create oklch arc gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_clipoklch(
@@ -976,6 +1002,7 @@
                         oklch_fromhex(state.c),
                         i/(state.n-1)));
         }
+        oklch_hueorigin = undefined;
 
         // update state
         let palette = document.getElementById('u_oklch_a3_palette');
