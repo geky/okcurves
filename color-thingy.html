@@ -43,25 +43,6 @@
         vertical-align: bottom;
         /*vertical-align: top;*/
     }
-    input.color_auto {
-        padding: 0 10px 0 2px;
-    }
-    .color_auto_trans {
-        display: inline-flex;
-        flex-direction: column;
-        vertical-align: bottom;
-        width: 12px;
-        margin: 0 0 0 -12px;
-    }
-    .color_auto_trans > button {
-        width: 12px;
-        height: 23px;
-        padding: 0;
-        border: 1px solid var(--foreground);
-        font: small monospace;
-        background: var(--background);
-        color: var(--foreground);
-    }
     input[type="number"] {
         width: 44px;
         height: 23px;
@@ -145,10 +126,7 @@
     <label for="u_oklch_l_b">b:</label>
     <input id="u_oklch_l_b" type="text" class="color" value="#fdf6e3">
     <label for="u_oklch_l_h">h:</label>
-    <input id="u_oklch_l_h" type="text" class="color color_auto"
-        data-auto-target="u_oklch_l_b"
-        data-auto-state="u_oklch_l_h_auto">
-    <input id="u_oklch_l_h_auto" type="checkbox" checked="true" hidden="true">
+    <input id="u_oklch_l_h" type="text" class="color" value="#fdf6e3">
     <label for="u_oklch_l_n">n:</label>
     <input id="u_oklch_l_n" type="text" class="number" value="9">
 </form>
@@ -161,10 +139,7 @@
     <label for="u_okhsv_l_b">b:</label>
     <input id="u_okhsv_l_b" type="text" class="color" value="#fdf6e3">
     <label for="u_okhsv_l_h">h:</label>
-    <input id="u_okhsv_l_h" type="text" class="color color_auto"
-        data-auto-target="u_okhsv_l_b"
-        data-auto-state="u_okhsv_l_h_auto">
-    <input id="u_okhsv_l_h_auto" type="checkbox" checked="true" hidden="true">
+    <input id="u_okhsv_l_h" type="text" class="color" value="#fdf6e3">
     <label for="u_okhsv_l_n">n:</label>
     <input id="u_okhsv_l_n" type="text" class="number" value="9">
 </form>
@@ -179,10 +154,7 @@
     <label for="u_oklch_l3_c">c:</label>
     <input id="u_oklch_l3_c" type="text" class="color" value="#fdf6e3">
     <label for="u_oklch_l3_h">h:</label>
-    <input id="u_oklch_l3_h" type="text" class="color color_auto"
-        data-auto-target="u_oklch_l3_b"
-        data-auto-state="u_oklch_l3_h_auto">
-    <input id="u_oklch_l3_h_auto" type="checkbox" checked="true" hidden="true">
+    <input id="u_oklch_l3_h" type="text" class="color" value="#b32d2d">
     <label for="u_oklch_l3_n">n:</label>
     <input id="u_oklch_l3_n" type="text" class="number" value="9">
 </form>
@@ -197,10 +169,7 @@
     <label for="u_oklch_a3_c">c:</label>
     <input id="u_oklch_a3_c" type="text" class="color" value="#fdf6e3">
     <label for="u_oklch_a3_h">h:</label>
-    <input id="u_oklch_a3_h" type="text" class="color color_auto"
-        data-auto-target="u_oklch_a3_b"
-        data-auto-state="u_oklch_a3_h_auto">
-    <input id="u_oklch_a3_h_auto" type="checkbox" checked="true" hidden="true">
+    <input id="u_oklch_a3_h" type="text" class="color" value="#b32d2d">
     <label for="u_oklch_a3_n">n:</label>
     <input id="u_oklch_a3_n" type="text" class="number" value="9">
 </form>
@@ -1042,44 +1011,6 @@
             x.addEventListener('change', u);
             x.addEventListener('focus', (e) => e.target.select());
             u({target: x});
-        }
-
-        // custom color transmission
-        for (let x of document.querySelectorAll('input.color_auto')) {
-            let target = document.getElementById(x.dataset.autoTarget);
-            let state = document.getElementById(x.dataset.autoState);
-            function u() {
-                if (state.checked) {
-                    let v = target.value;
-                    if (v != x.value) {
-                        x.value = v;
-                        x.style.backgroundColor = v;
-                        x.style.color = mkreadable(v,
-                            'var(--foreground)',
-                            'var(--background)');
-                        x.dispatchEvent(
-                            new Event('change', {'bubbles': true}));
-                    }
-                }
-            }
-
-            let trans = document.createElement('span');
-            trans.setAttribute('class', 'color_auto_trans');
-            let auto = document.createElement('button');
-            auto.setAttribute('type', 'button');
-            auto.setAttribute('class', 'color_auto_trans_auto');
-            auto.innerHTML = (state.checked) ? 'A' : 'M';
-            auto.addEventListener('click', function() {
-                state.checked = !state.checked;
-                auto.innerHTML = (state.checked) ? 'A' : 'M';
-            });
-            trans.appendChild(auto);
-            x.parentElement.insertBefore(trans, x.nextSibling);
-
-            target.addEventListener('change', u);
-            x.addEventListener('change', u);
-            auto.addEventListener('click', u);
-            u();
         }
 
         // custom number spinner
