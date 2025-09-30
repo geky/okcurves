@@ -511,8 +511,7 @@
         let [l, c, h] = oklch;
 
         // hue -> normalized a_, b_
-        let a_n = Math.cos(2*Math.PI * h);
-        let b_n = Math.sin(2*Math.PI * h);
+        let [_, a_n, b_n] = oklab_fromoklch([1, 1, h]);
 
         let l_0 = Math.min(Math.max(l, 0), 1);
 
@@ -569,9 +568,7 @@
         let [l, c, h] = oklch;
 
         // normalize a, b
-        let [_, a, b] = oklab_fromoklch(oklch);
-        let a_n = a / c;
-        let b_n = b / c;
+        let [_, a_n, b_n] = oklab_fromoklch([1, 1, h]);
 
         // find max s, t
         let s_0 = 0.5
@@ -608,8 +605,7 @@
         let [h, s, v] = okhsv;
 
         // hue -> normalized a_, b_
-        let a_n = Math.cos(2*Math.PI * h);
-        let b_n = Math.sin(2*Math.PI * h);
+        let [_, a_n, b_n] = oklab_fromoklch([1, 1, h]);
 
         // find max s, t
         let s_0 = 0.5;
