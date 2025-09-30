@@ -214,10 +214,17 @@
     <input id="u_oklch_m_a" type="text" class="color" value="#b32d2d">
     <label for="u_oklch_m_b">b:</label>
     <input id="u_oklch_m_b" type="text" class="color" value="#fdf6e3">
-    <label for="u_oklch_m_h">h:</label>
-    <input id="u_oklch_m_h" type="text" class="color" value="#fdf6e3">
 </form>
 <div id="u_oklch_m_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_s">
+    <p>oklch hue shift</p>
+    <label for="u_oklch_s_a">a:</label>
+    <input id="u_oklch_s_a" type="text" class="color" value="#b32d2d">
+    <label for="u_oklch_s_n">n:</label>
+    <input id="u_oklch_s_n" type="text" class="number" value="9">
+</form>
+<div id="u_oklch_s_palette" class="palette"></div>
 <hr>
 <script>
     // oklch/okhsv is all based on work by Björn Ottosson:
@@ -1150,11 +1157,8 @@
         let state = {};
         state.a = document.getElementById('u_oklch_m_a').value;
         state.b = document.getElementById('u_oklch_m_b').value;
-        state.h = document.getElementById('u_oklch_m_h').value;
 
         // create oklch hue mirror
-        oklch_hueorigin = undefined;
-        oklch_hueorigin = oklch_fromhex(state.h)[2];
         state.palette = [];
         let [a_l, a_c, a_h] = oklch_fromhex(state.a);
         let [b_l, b_c, b_h] = oklch_fromhex(state.b);
@@ -1166,7 +1170,6 @@
         state.palette.push(hex_clipoklch([b_l, b_c, a_h]));
         state.palette.push(hex_clipoklch([b_l, b_c, b_h]));
         state.palette.push(hex_clipoklch([b_l, b_c, mod1(b_h-(a_h-b_h))]));
-        oklch_hueorigin = undefined;
 
         // update state
         let palette = document.getElementById('u_oklch_m_palette');
@@ -1185,6 +1188,44 @@
         }
 
         console.log('u_oklch_m', state);
+    }
+
+    function u_oklch_s(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_s_a').value;
+        state.n = parseInt(document.getElementById('u_oklch_s_n').value);
+
+        // create oklch hue mirror
+        state.palette = [];
+        let [a_l, a_c, a_h] = oklch_fromhex(state.a);
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch([
+                    a_l,
+                    a_c,
+                    mod1(a_h + (i/state.n))]);
+        }
+
+        // update state
+        let palette = document.getElementById('u_oklch_s_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.palette.length; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_s', state);
     }
 
     (function() {
@@ -1244,6 +1285,7 @@
                     u_oklch_q3,
                     u_oklch_b3,
                     u_oklch_m,
+                    u_oklch_s,
                 ]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
