@@ -1,4 +1,5 @@
 <body>
+<meta charset="utf-8">
 <style>
     /* ground stuff */
     :root {
@@ -174,6 +175,38 @@
     <input id="u_oklch_a3_n" type="text" class="number" value="9">
 </form>
 <div id="u_oklch_a3_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_q3">
+    <p>oklch quadratic Bézier gradient</p>
+    <label for="u_oklch_q3_a">a:</label>
+    <input id="u_oklch_q3_a" type="text" class="color" value="#222222">
+    <label for="u_oklch_q3_b">b:</label>
+    <input id="u_oklch_q3_b" type="text" class="color" value="#b32d2d">
+    <label for="u_oklch_q3_c">c:</label>
+    <input id="u_oklch_q3_c" type="text" class="color" value="#fdf6e3">
+    <label for="u_oklch_q3_h">h:</label>
+    <input id="u_oklch_q3_h" type="text" class="color" value="#903b9f">
+    <label for="u_oklch_q3_n">n:</label>
+    <input id="u_oklch_q3_n" type="text" class="number" value="9">
+</form>
+<div id="u_oklch_q3_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_b3">
+    <p>oklch cubic Bézier gradient</p>
+    <label for="u_oklch_b3_a">a:</label>
+    <input id="u_oklch_b3_a" type="text" class="color" value="#222222">
+    <label for="u_oklch_b3_b">b:</label>
+    <input id="u_oklch_b3_b" type="text" class="color" value="#903b9f">
+    <label for="u_oklch_b3_c">c:</label>
+    <input id="u_oklch_b3_c" type="text" class="color" value="#b32d2d">
+    <label for="u_oklch_b3_d">d:</label>
+    <input id="u_oklch_b3_d" type="text" class="color" value="#fdf6e3">
+    <label for="u_oklch_b3_h">h:</label>
+    <input id="u_oklch_b3_h" type="text" class="color" value="#903b9f">
+    <label for="u_oklch_b3_n">n:</label>
+    <input id="u_oklch_b3_n" type="text" class="number" value="9">
+</form>
+<div id="u_oklch_b3_palette" class="palette"></div>
 <hr>
 <script>
     // oklch/okhsv is all based on work by Björn Ottosson:
@@ -640,7 +673,28 @@
     function v_lerp(a, b, t) {
         let x = [];
         for (let i = 0; i < a.length; i++) {
-            x[i] = a[i]*(1-t) + b[i]*t;
+            x[i] = (1-t)*a[i] + t*b[i];
+        }
+        return x;
+    }
+
+    // quadratic (3-point) Bézier interpolation
+    function v_qerp(a, b, c, t) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = (1-t)*(1-t)*a[i] + 2*(1-t)*t*b[i] + t*t*c[i];
+        }
+        return x;
+    }
+
+    // cubic (4-point) Bézier interpolation
+    function v_berp(a, b, c, d, t) {
+        let x = [];
+        for (let i = 0; i < a.length; i++) {
+            x[i] = ((1-t)*(1-t)*(1-t)*a[i]
+                    + 3*(1-t)*(1-t)*t*b[i]
+                    + 3*(1-t)*t*t*c[i]
+                    + t*t*t*d[i]);
         }
         return x;
     }
@@ -748,11 +802,11 @@
         return v_add([x, y, z], p);
     }
 
-    function v_aerp(a, b, c, t) {
+    function v_arcerp(a, b, c, t) {
         // find center and radius of arc
         let [p, r] = v_circumcircle(a, b, c);
 
-        // scale a->b/b->c independently
+        // scale a->b and b->c independently
         if (t <= 0.5) {
             let [n, r] = v_angle(p, a, b);
             return v_rotate(p, n, r*2*(t-0.0), a);
@@ -965,7 +1019,7 @@
         state.palette = [];
         for (let i = 0; i < state.n; i++) {
             state.palette[i] = hex_clipoklch(
-                    v_aerp(
+                    v_arcerp(
                         oklch_fromhex(state.a),
                         oklch_fromhex(state.b),
                         oklch_fromhex(state.c),
@@ -990,6 +1044,96 @@
         }
 
         console.log('u_oklch_a3', state);
+    }
+
+    function u_oklch_q3(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_q3_a').value;
+        state.b = document.getElementById('u_oklch_q3_b').value;
+        state.c = document.getElementById('u_oklch_q3_c').value;
+        state.h = document.getElementById('u_oklch_q3_h').value;
+        state.n = parseInt(document.getElementById('u_oklch_q3_n').value);
+
+        // create oklch quadratic Bézier gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch(
+                    v_qerp(
+                        oklch_fromhex(state.a),
+                        oklch_fromhex(state.b),
+                        oklch_fromhex(state.c),
+                        i/(state.n-1)));
+        }
+        oklch_hueorigin = undefined;
+
+        // update state
+        let palette = document.getElementById('u_oklch_q3_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_q3', state);
+    }
+
+    function u_oklch_b3(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_b3_a').value;
+        state.b = document.getElementById('u_oklch_b3_b').value;
+        state.c = document.getElementById('u_oklch_b3_c').value;
+        state.d = document.getElementById('u_oklch_b3_d').value;
+        state.h = document.getElementById('u_oklch_b3_h').value;
+        state.n = parseInt(document.getElementById('u_oklch_b3_n').value);
+
+        // create oklch quadratic Bézier gradient
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch(
+                    v_berp(
+                        oklch_fromhex(state.a),
+                        oklch_fromhex(state.b),
+                        oklch_fromhex(state.c),
+                        oklch_fromhex(state.d),
+                        i/(state.n-1)));
+        }
+        oklch_hueorigin = undefined;
+
+        // update state
+        let palette = document.getElementById('u_oklch_b3_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.n; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_b3', state);
     }
 
     (function() {
@@ -1040,12 +1184,14 @@
 
         // palette update functions
         for (let u of [
-                u_ground,
-                u_rgb_l,
-                u_oklch_l,
-                u_okhsv_l,
-                u_oklch_l3,
-                u_oklch_a3,
+                    u_ground,
+                    u_rgb_l,
+                    u_oklch_l,
+                    u_okhsv_l,
+                    u_oklch_l3,
+                    u_oklch_a3,
+                    u_oklch_q3,
+                    u_oklch_b3,
                 ]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
