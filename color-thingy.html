@@ -208,6 +208,17 @@
 </form>
 <div id="u_oklch_b3_palette" class="palette"></div>
 <hr>
+<form class="u_oklch_m">
+    <p>oklch hue mirror</p>
+    <label for="u_oklch_m_a">a:</label>
+    <input id="u_oklch_m_a" type="text" class="color" value="#b32d2d">
+    <label for="u_oklch_m_b">b:</label>
+    <input id="u_oklch_m_b" type="text" class="color" value="#fdf6e3">
+    <label for="u_oklch_m_h">h:</label>
+    <input id="u_oklch_m_h" type="text" class="color" value="#fdf6e3">
+</form>
+<div id="u_oklch_m_palette" class="palette"></div>
+<hr>
 <script>
     // oklch/okhsv is all based on work by Björn Ottosson:
     // - https://bottosson.github.io/posts/oklab
@@ -285,6 +296,16 @@
     // oklab <-> oklch conversion
     let oklch_hueorigin = undefined;
 
+    function mod1(h) {
+        while (h < 0) {
+            h += 1;
+        }
+        while (h >= 1) {
+            h -= 1;
+        }
+        return h;
+    }
+
     function oklch_fromoklab(oklab) {
         let [l, a, b] = oklab;
         // cartesian -> polar
@@ -296,12 +317,7 @@
                 h = 0.5;
             // center hue origin
             } else {
-                h = h - (oklch_hueorigin - 0.5);
-                if (h < 0) {
-                    h += 1;
-                } else if (h >= 1) {
-                    h -= 1;
-                }
+                h = mod1(h - (oklch_hueorigin - 0.5));
             }
         }
         return [l, c, h];
@@ -311,12 +327,7 @@
         let [l, c, h] = oklch;
         if (oklch_hueorigin != undefined) {
             // uncenter hue origin
-            h = h + (oklch_hueorigin - 0.5);
-            if (h < 0) {
-                h += 1;
-            } else if (h >= 1) {
-                h -= 1;
-            }
+            h = mod1(h + (oklch_hueorigin - 0.5));
         }
         // polar -> cartesian
         let a = c * Math.cos(2*Math.PI * h);
@@ -852,7 +863,7 @@
         // update state
         let palette = document.getElementById('u_rgb_l_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -894,7 +905,7 @@
         // update state
         let palette = document.getElementById('u_oklch_l_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -936,7 +947,7 @@
         // update state
         let palette = document.getElementById('u_okhsv_l_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -982,7 +993,7 @@
         // update state
         let palette = document.getElementById('u_oklch_l3_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -1026,7 +1037,7 @@
         // update state
         let palette = document.getElementById('u_oklch_a3_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -1070,7 +1081,7 @@
         // update state
         let palette = document.getElementById('u_oklch_q3_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -1116,7 +1127,7 @@
         // update state
         let palette = document.getElementById('u_oklch_b3_palette');
         palette.innerHTML = '';
-        for (let i = 0; i < state.n; i++) {
+        for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
@@ -1130,6 +1141,50 @@
         }
 
         console.log('u_oklch_b3', state);
+    }
+
+    function u_oklch_m(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_m_a').value;
+        state.b = document.getElementById('u_oklch_m_b').value;
+        state.h = document.getElementById('u_oklch_m_h').value;
+
+        // create oklch hue mirror
+        oklch_hueorigin = undefined;
+        oklch_hueorigin = oklch_fromhex(state.h)[2];
+        state.palette = [];
+        let [a_l, a_c, a_h] = oklch_fromhex(state.a);
+        let [b_l, b_c, b_h] = oklch_fromhex(state.b);
+        state.palette.push(hex_clipoklch([a_l, a_c, mod1(a_h-(b_h-a_h))]));
+        state.palette.push(hex_clipoklch([a_l, a_c, a_h]));
+        state.palette.push(hex_clipoklch([a_l, a_c, b_h]));
+        state.palette.push(hex_clipoklch([a_l, a_c, mod1(b_h-(a_h-b_h))]));
+        state.palette.push(hex_clipoklch([b_l, b_c, mod1(a_h-(b_h-a_h))]));
+        state.palette.push(hex_clipoklch([b_l, b_c, a_h]));
+        state.palette.push(hex_clipoklch([b_l, b_c, b_h]));
+        state.palette.push(hex_clipoklch([b_l, b_c, mod1(b_h-(a_h-b_h))]));
+        oklch_hueorigin = undefined;
+
+        // update state
+        let palette = document.getElementById('u_oklch_m_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.palette.length; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_m', state);
     }
 
     (function() {
@@ -1188,6 +1243,7 @@
                     u_oklch_a3,
                     u_oklch_q3,
                     u_oklch_b3,
+                    u_oklch_m,
                 ]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
