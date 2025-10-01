@@ -5,6 +5,8 @@
     :root {
         --background: #222222;
         --foreground: #fdf6e3;
+        --darkground: #222222;
+        --lightground: #fdf6e3;
     }
     body {
         background-color: var(--background);
@@ -679,16 +681,6 @@
         return hex_fromoklch(oklch_fromokhsv(okhsv));
     }
 
-    // other color miscellany
-    function mkreadable(hex, fg, bg) {
-        let [r, g, b] = rgb_fromhex(hex);
-        if (r + g + b < 1.5) {
-            return fg;
-        } else {
-            return bg;
-        }
-    }
-
 
     // vector math stuff
 
@@ -840,6 +832,16 @@
     }
 
 
+    // other color miscellany
+    function mkreadable(hex) {
+        let [r, g, b] = rgb_fromhex(hex);
+        if (r + g + b < 1.5) {
+            return 'var(--lightground)';
+        } else {
+            return 'var(--darkground)';
+        }
+    }
+
     // update functions
     function u_ground() {
         console.log('hi!');
@@ -848,11 +850,21 @@
         let state = {};
         state.background = document.getElementById('background').value;
         state.foreground = document.getElementById('foreground').value;
+        if (rgb_fromhex(state.background).reduce((a,b) => a + b, 0)
+                <= rgb_fromhex(state.foreground).reduce((a,b) => a + b, 0)) {
+            state.darkground = state.background;
+            state.lightground = state.foreground;
+        } else {
+            state.darkground = state.foreground;
+            state.lightground = state.background;
+        }
 
         // update state
         let root = document.documentElement;
         root.style.setProperty('--background', state.background);
         root.style.setProperty('--foreground', state.foreground);
+        root.style.setProperty('--darkground', state.darkground);
+        root.style.setProperty('--lightground', state.lightground);
 
         console.log('u_ground', state);
     }
@@ -883,12 +895,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -925,12 +932,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -967,9 +969,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i],
-                    'var(--foreground)',
-                    'var(--background)');
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1013,12 +1013,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1057,12 +1052,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1101,12 +1091,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1147,12 +1132,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1187,12 +1167,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1225,12 +1200,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1263,12 +1233,7 @@
             let p = document.createElement('span');
             p.innerHTML = state.palette[i];
             p.style.backgroundColor = state.palette[i];
-            if (rgb_fromhex(state.palette[i])
-                    .reduce((a,b) => a + b, 0) < 1.5) {
-                p.style.color = 'var(--foreground)';
-            } else {
-                p.style.color = 'var(--background)';
-            }
+            p.style.color = mkreadable(state.palette[i]);
             palette.appendChild(p);
         }
 
@@ -1287,9 +1252,7 @@
                 let x = e.target;
                 let v = x.value;
                 x.style.backgroundColor = v;
-                x.style.color = mkreadable(v,
-                    'var(--foreground)',
-                    'var(--background)');
+                x.style.color = mkreadable(v);
             }
             x.addEventListener('change', u);
             x.addEventListener('focus', (e) => e.target.select());
