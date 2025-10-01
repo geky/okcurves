@@ -157,7 +157,7 @@
     <label for="u_oklch_l3_h">h:</label>
     <input id="u_oklch_l3_h" type="text" class="color" value="#903b9f">
     <label for="u_oklch_l3_n">n:</label>
-    <input id="u_oklch_l3_n" type="text" class="number" value="9">
+    <input id="u_oklch_l3_n" type="text" class="number" value="7">
 </form>
 <div id="u_oklch_l3_palette" class="palette"></div>
 <hr>
@@ -172,7 +172,7 @@
     <label for="u_oklch_a3_h">h:</label>
     <input id="u_oklch_a3_h" type="text" class="color" value="#903b9f">
     <label for="u_oklch_a3_n">n:</label>
-    <input id="u_oklch_a3_n" type="text" class="number" value="9">
+    <input id="u_oklch_a3_n" type="text" class="number" value="7">
 </form>
 <div id="u_oklch_a3_palette" class="palette"></div>
 <hr>
@@ -187,7 +187,7 @@
     <label for="u_oklch_q3_h">h:</label>
     <input id="u_oklch_q3_h" type="text" class="color" value="#903b9f">
     <label for="u_oklch_q3_n">n:</label>
-    <input id="u_oklch_q3_n" type="text" class="number" value="9">
+    <input id="u_oklch_q3_n" type="text" class="number" value="7">
 </form>
 <div id="u_oklch_q3_palette" class="palette"></div>
 <hr>
@@ -204,7 +204,7 @@
     <label for="u_oklch_b3_h">h:</label>
     <input id="u_oklch_b3_h" type="text" class="color" value="#903b9f">
     <label for="u_oklch_b3_n">n:</label>
-    <input id="u_oklch_b3_n" type="text" class="number" value="9">
+    <input id="u_oklch_b3_n" type="text" class="number" value="7">
 </form>
 <div id="u_oklch_b3_palette" class="palette"></div>
 <hr>
@@ -217,14 +217,23 @@
 </form>
 <div id="u_oklch_m_palette" class="palette"></div>
 <hr>
-<form class="u_oklch_s">
-    <p>oklch hue shift</p>
-    <label for="u_oklch_s_a">a:</label>
-    <input id="u_oklch_s_a" type="text" class="color" value="#b32d2d">
-    <label for="u_oklch_s_n">n:</label>
-    <input id="u_oklch_s_n" type="text" class="number" value="9">
+<form class="u_oklch_c">
+    <p>oklch hue circle</p>
+    <label for="u_oklch_c_a">a:</label>
+    <input id="u_oklch_c_a" type="text" class="color" value="#b32d2d">
+    <label for="u_oklch_c_n">n:</label>
+    <input id="u_oklch_c_n" type="text" class="number" value="6">
 </form>
-<div id="u_oklch_s_palette" class="palette"></div>
+<div id="u_oklch_c_palette" class="palette"></div>
+<hr>
+<form class="u_oklch_c2">
+    <p>oklch hue circle</p>
+    <label for="u_oklch_c2_a">a:</label>
+    <input id="u_oklch_c2_a" type="text" class="color" value="#f6bc62">
+    <label for="u_oklch_c2_n">n:</label>
+    <input id="u_oklch_c2_n" type="text" class="number" value="6">
+</form>
+<div id="u_oklch_c2_palette" class="palette"></div>
 <hr>
 <script>
     // oklch/okhsv is all based on work by Björn Ottosson:
@@ -1190,13 +1199,13 @@
         console.log('u_oklch_m', state);
     }
 
-    function u_oklch_s(){
+    function u_oklch_c(){
         console.log('hi!');
 
         // calculate state
         let state = {};
-        state.a = document.getElementById('u_oklch_s_a').value;
-        state.n = parseInt(document.getElementById('u_oklch_s_n').value);
+        state.a = document.getElementById('u_oklch_c_a').value;
+        state.n = parseInt(document.getElementById('u_oklch_c_n').value);
 
         // create oklch hue mirror
         state.palette = [];
@@ -1210,7 +1219,7 @@
         }
 
         // update state
-        let palette = document.getElementById('u_oklch_s_palette');
+        let palette = document.getElementById('u_oklch_c_palette');
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
@@ -1225,7 +1234,45 @@
             palette.appendChild(p);
         }
 
-        console.log('u_oklch_s', state);
+        console.log('u_oklch_c', state);
+    }
+
+    function u_oklch_c2(){
+        console.log('hi!');
+
+        // calculate state
+        let state = {};
+        state.a = document.getElementById('u_oklch_c2_a').value;
+        state.n = parseInt(document.getElementById('u_oklch_c2_n').value);
+
+        // create oklch hue mirror
+        state.palette = [];
+        let [a_l, a_c, a_h] = oklch_fromhex(state.a);
+        state.palette = [];
+        for (let i = 0; i < state.n; i++) {
+            state.palette[i] = hex_clipoklch([
+                    a_l,
+                    a_c,
+                    mod1(a_h + (i/state.n))]);
+        }
+
+        // update state
+        let palette = document.getElementById('u_oklch_c2_palette');
+        palette.innerHTML = '';
+        for (let i = 0; i < state.palette.length; i++) {
+            let p = document.createElement('span');
+            p.innerHTML = state.palette[i];
+            p.style.backgroundColor = state.palette[i];
+            if (rgb_fromhex(state.palette[i])
+                    .reduce((a,b) => a + b, 0) < 1.5) {
+                p.style.color = 'var(--foreground)';
+            } else {
+                p.style.color = 'var(--background)';
+            }
+            palette.appendChild(p);
+        }
+
+        console.log('u_oklch_c2', state);
     }
 
     (function() {
@@ -1285,7 +1332,8 @@
                     u_oklch_q3,
                     u_oklch_b3,
                     u_oklch_m,
-                    u_oklch_s,
+                    u_oklch_c,
+                    u_oklch_c2,
                 ]) {
             for (let x of document.getElementsByClassName(u.name)) {
                 x.addEventListener('change', u);
