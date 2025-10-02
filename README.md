@@ -1,6 +1,6 @@
-https://okcurves.geky.net
-
 Curves through a perceptually uniform color space.
+
+https://okcurves.geky.net
 
 Built on oklch/oklab by Björn Ottosson:
 
