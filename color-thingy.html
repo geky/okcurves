@@ -7,6 +7,8 @@
         --foreground: #fdf6e3;
         --darkground: #222222;
         --lightground: #fdf6e3;
+        --url: #91caff;
+        --url-visited: #e8aefe;
     }
     body {
         background-color: var(--background);
@@ -15,10 +17,19 @@
     hr {
         color: var(--foreground);
     }
-    /* form stuff */
-    p, form {
+    a {
+        color: var(--url);
+    }
+    a:visited {
+        color: var(--url-visited);
+    }
+    p, ul, form {
         margin: 4px 0 4px 0;
     }
+    ul {
+        padding-left: 22px;
+    }
+    /* form stuff */
     input[type="color"] {
         border: 0;
         /*border: 4px #ff0000;*/
@@ -103,12 +114,39 @@
         font: small monospace;
     }
 </style>
+<p>Curves through a perceptually uniform color space.</p>
+<p>Built on oklch/oklab by Björn Ottosson:</p>
+<ul>
+    <li>
+        <a href="https://bottosson.github.io/posts/oklab">
+            https://bottosson.github.io/posts/oklab
+        </a>
+    </li>
+    <li>
+        <a href="https://bottosson.github.io/posts/colorwrong">
+            https://bottosson.github.io/posts/colorwrong
+        </a>
+    </li>
+    <li>
+        <a href="https://bottosson.github.io/posts/gamutclipping">
+            https://bottosson.github.io/posts/gamutclipping
+        </a>
+    </li>
+    <li>
+        <a href="https://bottosson.github.io/posts/colorpicker">
+            https://bottosson.github.io/posts/colorpicker
+        </a>
+    </li>
+</ul>
 <hr>
 <form class="u_ground">
     <label for="background">background:</label>
     <input id="background" type="text" class="color" value="#222222">
     <label for="foreground">foreground:</label>
     <input id="foreground" type="text" class="color" value="#fdf6e3">
+    <label for="url">url:</label>
+    <input id="url" type="text" class="color" value="#91caff">
+    <input id="url_visited" type="text" class="color" value="#e8aefe">
 </form>
 <hr>
 <form class="u_rgb_l">
@@ -858,6 +896,8 @@
             state.darkground = state.foreground;
             state.lightground = state.background;
         }
+        state.url = document.getElementById('url').value;
+        state.url_visited = document.getElementById('url_visited').value;
 
         // update state
         let root = document.documentElement;
@@ -865,6 +905,8 @@
         root.style.setProperty('--foreground', state.foreground);
         root.style.setProperty('--darkground', state.darkground);
         root.style.setProperty('--lightground', state.lightground);
+        root.style.setProperty('--url', state.url);
+        root.style.setProperty('--url-visited', state.url_visited);
 
         console.log('u_ground', state);
     }
