@@ -289,7 +289,10 @@
 
     // hex <-> rgb conversion
     function rgb_fromhex(hex) {
-        let x = parseInt(hex.slice(1, hex.length), 16);
+        if (hex.startsWith('#')) {
+            hex = hex.slice(1, hex.length);
+        }
+        let x = parseInt(hex, 16);
         return [
                 ((x >> 16) & 0xff) / 0xff,
                 ((x >>  8) & 0xff) / 0xff,
