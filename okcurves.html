@@ -592,7 +592,8 @@
     //
     function oklch_clip(oklch) {
         // do we even need to clip?
-        if (oklch.every((x) => x >= 0 && x <= 1)) {
+        if (rgb_fromoklch(oklch).every(
+                (x) => x >= 0 && x <= 1)) {
             return oklch;
         }
         let [l, c, h] = oklch;
