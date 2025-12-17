@@ -210,6 +210,11 @@ def wristserve(addr, **args):
     class Handler(http_server.SimpleHTTPRequestHandler):
         protocol_version = 'HTTP/1.1'
 
+        def __init__(self, *args_, **kwargs_):
+            super().__init__(
+                    directory=args.get('serve_from'),
+                    *args_, **kwargs_)
+
         def end_headers(self):
             self.send_header("Cache-Control", "no-cache")
             super().end_headers()
@@ -457,6 +462,10 @@ if __name__ == "__main__":
             metavar='addr',
             type=lambda a: (lambda a, p: (a, int(p)))(*a.split(':', 1)),
             help="Run a simple http server at this address:port.")
+    parser.add_argument(
+            '-S', '--serve-from',
+            help="Serve files from this directory. Defaults to the "
+                "current directory")
     parser.add_argument(
             '--inject-livereload',
             action='store_true',
