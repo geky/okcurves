@@ -301,6 +301,7 @@
         if (hex.startsWith('#')) {
             hex = hex.slice(1, hex.length);
         }
+        // note this stops on first non-int
         let x = parseInt(hex, 16);
         return [
                 ((x >> 16) & 0xff) / 0xff,
@@ -630,7 +631,13 @@
     }
 
     function hex_clipoklch(oklch) {
-        return hex_fromrgb(rgb_clipoklch(oklch));
+        let rgb = rgb_clipoklch(oklch);
+        if (oklch_fromrgb(rgb).every(
+                (x,i) => Math.abs(x-oklch[i]) < 0.00001)) {
+            return hex_fromrgb(rgb);
+        } else {
+            return hex_fromrgb(rgb) + '!';
+        }
     }
 
     // oklch <-> okhsv conversion
@@ -892,7 +899,19 @@
 
 
     // other color miscellany
-    function mkreadable(hex) {
+    function hex_isunrepresentable(hex) {
+        return hex.endsWith('!');
+    }
+
+    function hex_clean(hex) {
+        if (hex.endsWith('!')) {
+            return hex.slice(0, hex.length-1);
+        } else {
+            return hex;
+        }
+    }
+
+    function hex_mkreadable(hex) {
         let [r, g, b] = rgb_fromhex(hex);
         if (r + g + b < 1.5) {
             return 'var(--lightground)';
@@ -956,9 +975,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -993,9 +1015,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1030,9 +1055,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1074,9 +1102,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1113,9 +1144,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1152,9 +1186,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1193,9 +1230,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1228,9 +1268,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1261,9 +1304,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1294,9 +1340,12 @@
         palette.innerHTML = '';
         for (let i = 0; i < state.palette.length; i++) {
             let p = document.createElement('span');
-            p.innerHTML = state.palette[i];
-            p.style.backgroundColor = state.palette[i];
-            p.style.color = mkreadable(state.palette[i]);
+            p.innerHTML = hex_clean(state.palette[i]);
+            p.style.backgroundColor = hex_clean(state.palette[i]);
+            p.style.color = hex_mkreadable(state.palette[i]);
+            if (hex_isunrepresentable(state.palette[i])) {
+                p.style.textDecoration = 'overline';
+            }
             palette.appendChild(p);
         }
 
@@ -1315,7 +1364,7 @@
                 let x = e.target;
                 let v = x.value;
                 x.style.backgroundColor = v;
-                x.style.color = mkreadable(v);
+                x.style.color = hex_mkreadable(v);
             }
             x.addEventListener('change', u);
             x.addEventListener('focus', (e) => e.target.select());
